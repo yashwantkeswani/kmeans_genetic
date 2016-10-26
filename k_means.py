@@ -1,7 +1,7 @@
 import numpy as np
 import time
 
-debug = False
+debug = True
 
 def crossovers(solution_set, k, dim, m, n = 2):
 	""" 2*m indicates the number of solutions that need to be generated from the crossover.
@@ -49,6 +49,16 @@ def crossovers(solution_set, k, dim, m, n = 2):
 		new_solutions[2*i][:] = gene_1_new
 		new_solutions[2*i+1][:] = gene_2_new
 	return new_solutions.copy()
+
+
+def mutations(solution_set, k, dim, p = 0.1):
+	for i in range(solution_set.shape[0]):
+		if np.random.rand()<=p:
+			debug and print("Yes")
+			position = np.random.randint(0, dim)
+			debug and print("Position is ", position)			
+			solution_set[i][position] = np.random.randint(0,k)
+	return solution_set.copy()
 
 
 def findCentres(datapoints, solution, k, dim):
@@ -100,5 +110,5 @@ datapoints = np.random.rand(points, dim)
 #print(k_means_regular(datapoints, points, dim, k, allowed_error = 10))
 
 s = np.random.randint(0,5,size = (6,6))
-z = crossovers(s, 5, 6, 3, n = 1)
+z = mutations(s, 5, 6, p =1)
 print(z)

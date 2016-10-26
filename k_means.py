@@ -3,6 +3,110 @@ import time
 
 debug = False
 
+def crossovers_centres(solution_set, k, dim, points, m, n = 2):
+	""" 2*m indicates the number of solutions that need to be generated from the crossover.
+	n is the number of crossovers"""
+	
+	if (2*m)>solution_set.shape[0]:
+		print("Error!")
+		return
+	combinations = np.linspace(0,solution_set.shape[0]-1,solution_set.shape[0], dtype = int)
+	np.random.shuffle(combinations)
+	combinations = combinations[:2*m]
+	debug and print("Combinations", combinations)
+	new_solutions = np.zeros(shape = (2*m, k, dim))
+	for i in range(m):
+		gene1 = solution_set[combinations[2*i]].reshape(k*dim)	
+		gene2 = solution_set[combinations[2*i+1]].reshape(k*dim)
+		crossover_points = np.sort(np.random.randint(1, k*dim, size = n))
+		gene_1_new = np.zeros(shape = (1, k*dim))
+		gene_2_new = np.zeros(shape = (1, k*dim))
+		debug and print("Crossover", crossover_points)
+		gene_1_new[0][:crossover_points[0]] = gene2[:crossover_points[0]]
+		gene_2_new[0][:crossover_points[0]] = gene1[:crossover_points[0]]
+		for j in range(1,n):
+			if j%2==0:
+				gene_2_new[0][crossover_points[j-1]:crossover_points[j]] = gene1[crossover_points[j-1]:crossover_points[j]]
+				gene_1_new[0][crossover_points[j-1]:crossover_points[j]] = gene2[crossover_points[j-1]:crossover_points[j]]
+			else:
+				gene_1_new[0][crossover_points[j-1]:crossover_points[j]] = gene1[crossover_points[j-1]:crossover_points[j]]
+				gene_2_new[0][crossover_points[j-1]:crossover_points[j]] = gene2[crossover_points[j-1]:crossover_points[j]]
+
+		if n==1:
+			gene_2_new[0][crossover_points[-1]:] = gene2[crossover_points[-1]:]
+			gene_1_new[0][crossover_points[-1]:] = gene1[crossover_points[-1]:]
+		else:		
+			if n%2==1:
+				gene_2_new[0][crossover_points[-1]:] = gene1[crossover_points[-1]:]
+				gene_1_new[0][crossover_points[-1]:] = gene2[crossover_points[-1]:]
+			else:
+				gene_2_new[0][crossover_points[-1]:] = gene1[crossover_points[-1]:]
+				gene_1_new[0][crossover_points[-1]:] = gene2[crossover_points[-1]:]
+		debug and print("gene1", gene1)
+		debug and print("gene1", gene2)
+		debug and print("gene1_u", gene_1_new)
+		debug and print("gene2_u", gene_2_new)
+		new_solutions[2*i] = np.copy(gene_1_new[0].reshape(k, dim))
+		new_solutions[2*i+1] = np.copy(gene_2_new[0].reshape(k, dim))
+	return np.copy(new_solutions)
+
+
+def mutations_centres(solution_set, k, dim, points, p = 0.1):
+	for i in range(solution_set.shape[0]):
+		if np.random.rand()<=p:
+			debug and print("Yes")
+			position = np.random.randint(0, k)
+			position2 = np.random.randint(0, dim)
+			debug and print("Position is ", position)		
+			solution_set[i][position][position2] = np.random.rand()
+	return np.copy(solution_set)
+
+def k_means_genetic_generation_centres(solution_set, datapoints, k, dim, points, top_n, crossover_points, p, allowed_error):
+	new_solution = np.zeros(shape = solution_set.shape)	
+	scores = np.zeros(shape = (solution_set.shape[0]))
+	for i in range(solution_set.shape[0]):
+		centres = np.copy(solution_set[i])
+		clusters = 	reassignPoints(datapoints, np.copy(centres), points, k, dim)
+		scores[i] = calculateError(datapoints, np.copy(clusters), np.copy(centres), k , dim)		
+
+	top_n_indices = scores.argsort()[:top_n]
+	if scores[top_n_indices[0]]<allowed_error:
+		return (True, solution_set, top_n_indices[0], scores[top_n_indices[0]]) 
+
+	for i in range(top_n):
+		new_solution[i] = np.copy(solution_set[top_n_indices[i]])
+	
+	crossover_considerations = np.zeros(shape = (solution_set.shape[0] - top_n, k, dim))
+	top_n_indices = scores.argsort()[top_n:]
+	for i in range(solution_set.shape[0] - top_n):
+		crossover_considerations[i] = np.copy(solution_set[top_n_indices[i]])
+	final_crossover = crossovers_centres(np.copy(crossover_considerations), k, dim, points, int((solution_set.shape[0] - top_n)/2), n = crossover_points)		
+	mutated = mutations_centres(np.copy(final_crossover), k, dim, points, p)
+	top_n_indices = scores.argsort()[:top_n]
+	for i in range(solution_set.shape[0] - top_n):
+		new_solution[top_n + i] = np.copy(mutated[i])
+	return (False, np.copy(new_solution), top_n_indices[0], scores[top_n_indices[0]])
+
+
+
+
+def k_means_genetic_centres(datapoints, dim, points, k, solution_set_size = 100, top_n = 30, crossover_points = 2, p = 0.1, allowed_error = 10, max_generations = 10):
+	generation = 0
+	solution_set = np.random.rand(solution_set_size, k, dim)	
+	while True:
+		x = k_means_genetic_generation_centres(np.copy(solution_set), datapoints, k, dim, points, top_n, crossover_points, p, allowed_error)
+		if x[0]:
+			break
+		else:
+			solution_set = np.copy(x[1])
+			print(x[3], x[2])
+		debug and print(solution_set)
+		generation+=1
+		if generation>max_generations:
+			break			
+	print(x[1][x[2]])
+	print("Error = ", x[2])
+		
 
 def k_means_genetic_generation(solution_set, datapoints, k, dim, points, top_n, crossover_points, p, allowed_error):
 	new_solution = np.zeros(shape = solution_set.shape, dtype = np.int32)	
@@ -164,9 +268,9 @@ def k_means_regular(datapoints, points, dim, k, allowed_error = 10, max_generati
 #Initial data which is provided
 k = 10
 points = 40000
-dim = 91
+dim = 50
 datapoints = np.random.rand(points, dim)
 print(k_means_regular(datapoints, points, dim, k, allowed_error = 21.5))
 input()
-print(k_means_genetic(datapoints, dim, points, k, solution_set_size = 100, top_n = 2, crossover_points = 2, p = 0.15, allowed_error = 21.5))
+print(k_means_genetic_centres(datapoints, dim, points, k, solution_set_size = 10, top_n = 2, crossover_points = 2, p = 0.15, allowed_error = 21.5))
 

@@ -137,7 +137,7 @@ def k_means_genetic_generation(solution_set, datapoints, k, dim, points, top_n, 
 	top_n_indices = scores.argsort()[:top_n]
 	for i in range(solution_set.shape[0] - top_n - new_n):
 		new_solution[top_n + new_n + i] = np.copy(mutated[i])
-	return (False, np.copy(new_solution), top_n_indices[0], scores[top_n_indices[0]])
+	return (False, np.copy(mutations(np.copy(new_solution), k, dim, points, p)), top_n_indices[0], scores[top_n_indices[0]])
 	
 
 def compare(array1, array2):
@@ -278,8 +278,10 @@ def k_means_regular(datapoints, points, dim, k, allowed_error = 10, max_generati
 k = 5
 points = 100
 dim = 10
+np.random.seed(42)
 datapoints = np.random.rand(points, dim)
 
+np.random.seed()
 #print(k_means_regular(datapoints, points, dim, k, allowed_error = 0.001, max_generations = 300))
 
 kmeans = KMeans(n_clusters=k, random_state=0).fit(datapoints)
@@ -292,5 +294,5 @@ print(calculateError(datapoints, kmeans.labels_, cet, k , dim))
 #print(end-start)
 #print(end2-end)
 input()
-print(k_means_genetic(datapoints, dim, points, k, solution_set_size = 100, top_n = 2, new_n = 10, crossover_points = 25, p = 1, allowed_error = 21.5, max_generations = 100))
+print(k_means_genetic(datapoints, dim, points, k, solution_set_size = 100, top_n = 10, new_n = 10, crossover_points = 4, p = 1, allowed_error = 21.5, max_generations = 100))
 

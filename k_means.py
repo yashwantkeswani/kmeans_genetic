@@ -130,14 +130,14 @@ def k_means_genetic_generation(solution_set, datapoints, k, dim, points, top_n, 
 	top_n_indices = scores.argsort()[top_n:]
 		
 	for i in range(solution_set.shape[0] - top_n - new_n):
-		crossover_considerations[i] = np.copy(solution_set[top_n_indices[i+top_n]])
+		crossover_considerations[i] = np.copy(solution_set[top_n_indices[i]])
 	
 	final_crossover = crossovers(np.copy(crossover_considerations), k, dim, points, int((solution_set.shape[0] - top_n - new_n)/2), n = crossover_points)
 	mutated = mutations(np.copy(final_crossover), k, dim, points, p)
 	top_n_indices = scores.argsort()[:top_n]
 	for i in range(solution_set.shape[0] - top_n - new_n):
 		new_solution[top_n + new_n + i] = np.copy(mutated[i])
-	return (False, np.copy(mutations(np.copy(new_solution), k, dim, points, p)), top_n_indices[0], scores[top_n_indices[0]])
+	return (False, np.copy(new_solution), top_n_indices[0], scores[top_n_indices[0]])
 	
 
 def compare(array1, array2):
@@ -164,13 +164,10 @@ def k_means_genetic(datapoints, dim, points, k, solution_set_size = 100, top_n =
 		else:
 			print(x[1])
 			solution_set = np.copy(x[1])
-#			print(x[3], x[2])
 		debug and print(solution_set)
 		generation+=1
 		if generation>max_generations:
 			break			
-#	print(x[1][x[2]])
-	print("Error = ", x[3])
 	return x
 
 def crossovers(solution_set, k, dim, points, m, n = 2):
@@ -222,12 +219,14 @@ def crossovers(solution_set, k, dim, points, m, n = 2):
 
 
 def mutations(solution_set, k, dim, points, p = 0.1, number_in_each = None):
+	master_array = np.arange(points)	
 	if number_in_each is None:
-		number_in_each = int(points*0)
+		number_in_each = int(points*0.01)
 	for i in range(solution_set.shape[0]):
 		if np.random.rand()<=p:
 			debug and print("Yes")
-			position = np.random.randint(0, points, size = number_in_each)
+			np.random.shuffle(master_array)
+			position = np.random.choice(master_array, number_in_each)
 			debug and print("Position is ", position)
 			for each in position:
 				solution_set[i][each] = np.random.randint(0,k)
@@ -255,7 +254,7 @@ def calculateError(datapoints, solution, centres, k , dim):
 	return error
 
 def reassignPoints(datapoints, centres, points, k, dim):
-	distance = np.zeros(points, k)
+	distance = np.zeros(shape=(points, k))
 	for i in range(k):
 		distance[:,i] = np.sqrt(np.sum(np.multiply(datapoints - centres[i,:],datapoints - centres[i,:]), axis=1))
 	temp3 = np.argmin(distance, axis = 1)
@@ -274,25 +273,39 @@ def k_means_regular(datapoints, points, dim, k, allowed_error = 10, max_generati
 #		print(generation, error)
 	return (solution, error, generation)				
 
+
+def paper_approach(datapoints, dim, points, k, solution_set_size = 100, top_n = 30, new_n = 40, crossover_points = 1, p = 0.1, allowed_error = 10, max_generations = 10, intial_iteration = 2):
+	"""http://ir.kaist.ac.kr/anthology/2009.06-Al-Shboul.pdf"""
+	solution_set = np.zeros(shape = (solution_set_size, points))
+	for i in range(solution_set_size):
+		solution_set[i] = k_means_regular(datapoints, points, dim, k, allowed_error = 0.001, max_generations = intial_iteration)[0]
+	generation = 0
+	x = None
+	while True:
+		x = k_means_genetic_generation(np.copy(solution_set), datapoints, k, dim, points, top_n, new_n, crossover_points, p, allowed_error)
+		if x[0]:
+			break
+		else:
+			#print(x[1])
+			solution_set = np.copy(x[1])
+#			print(x[3], x[2])
+		debug and print(solution_set)
+		generation+=1
+		if generation>max_generations:
+			break			
+#	print(x[1][x[2]])
+	print("Error = ", x[3])
+	return x
+	
 #Initial data which is provided
-k = 5
-points = 100
+k = 15
+points = 1000
 dim = 10
-np.random.seed(42)
 datapoints = np.random.rand(points, dim)
-
-np.random.seed()
-#print(k_means_regular(datapoints, points, dim, k, allowed_error = 0.001, max_generations = 300))
-
-kmeans = KMeans(n_clusters=k, random_state=0).fit(datapoints)
-print(kmeans.labels_)
-print(kmeans.inertia_)
-cet = findCentres(datapoints, kmeans.labels_, k, dim)
-print(calculateError(datapoints, kmeans.labels_, cet, k , dim))
-#end2 = timeit.timeit();
-
-#print(end-start)
-#print(end2-end)
-input()
-print(k_means_genetic(datapoints, dim, points, k, solution_set_size = 100, top_n = 10, new_n = 10, crossover_points = 4, p = 1, allowed_error = 21.5, max_generations = 100))
+s = k_means_regular(datapoints, points, dim, k, allowed_error = 0.001, max_generations = 300)
+print(s[1])
+print(k_means_regular(datapoints, points, dim, k, allowed_error = 0.001, max_generations = 1)[1])
+print(paper_approach(datapoints, dim, points, k, solution_set_size = 100, top_n = 20, new_n = 0, crossover_points = 2, p = 0.001, allowed_error = 21.5, max_generations = 100)[1])
+#input()
+#print(k_means_genetic(datapoints, dim, points, k, solution_set_size = 100, top_n = 10, new_n = 10, crossover_points = 2, p = 1, allowed_error = 21.5, max_generations = 100))
 

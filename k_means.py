@@ -274,11 +274,11 @@ def k_means_regular(datapoints, points, dim, k, allowed_error = 10, max_generati
 	return (solution, error, generation)				
 
 
-def paper_approach(datapoints, dim, points, k, solution_set_size = 100, top_n = 30, new_n = 40, crossover_points = 1, p = 0.1, allowed_error = 10, max_generations = 10, intial_iteration = 2):
+def paper_approach(datapoints, dim, points, k, solution_set_size = 100, top_n = 30, new_n = 40, crossover_points = 1, p = 0.1, allowed_error = 10, max_generations = 10, initial_iteration = 2):
 	"""http://ir.kaist.ac.kr/anthology/2009.06-Al-Shboul.pdf"""
 	solution_set = np.zeros(shape = (solution_set_size, points))
 	for i in range(solution_set_size):
-		solution_set[i] = k_means_regular(datapoints, points, dim, k, allowed_error = 0.001, max_generations = intial_iteration)[0]
+		solution_set[i] = k_means_regular(datapoints, points, dim, k, allowed_error = 0.001, max_generations = initial_iteration)[0]
 	generation = 0
 	x = None
 	while True:
@@ -302,10 +302,10 @@ k = 15
 points = 1000
 dim = 10
 datapoints = np.random.rand(points, dim)
-s = k_means_regular(datapoints, points, dim, k, allowed_error = 0.001, max_generations = 300)
+s = k_means_regular(datapoints, points, dim, k, allowed_error = 0.001, max_generations = 500)
 print(s[1])
 print(k_means_regular(datapoints, points, dim, k, allowed_error = 0.001, max_generations = 1)[1])
-print(paper_approach(datapoints, dim, points, k, solution_set_size = 100, top_n = 20, new_n = 0, crossover_points = 2, p = 0.001, allowed_error = 21.5, max_generations = 100)[1])
+print(paper_approach(datapoints, dim, points, k, solution_set_size = 50, top_n = 20, new_n = 0, crossover_points = 2, p = 0.001, allowed_error = 21.5, max_generations = 20, initial_iteration = 5)[1])
 #input()
 #print(k_means_genetic(datapoints, dim, points, k, solution_set_size = 100, top_n = 10, new_n = 10, crossover_points = 2, p = 1, allowed_error = 21.5, max_generations = 100))
 

@@ -1,6 +1,7 @@
 import numpy as np
 import timeit
-
+import time
+from dunn import *
 from sklearn.cluster import KMeans
 
 debug = False
@@ -304,18 +305,44 @@ def paper_approach(datapoints, dim, points, k, solution_set_size = 100, top_n = 
 		if generation>max_generations:
 			break			
 #	print(x[1][x[2]])
-	print("Error = ", x[3])
+#	print("Error = ", x[3])
 	return x
 	
 #Initial data which is provided
-k = 20
-points = 1000
-dim = 10
+k = 10
+points = 10
+dim = 25
+
+
 datapoints = np.random.rand(points, dim)
-s = k_means_regular(datapoints, points, dim, k, allowed_error = 0.001, max_generations = 500)
-print(s[1])
-print(k_means_regular(datapoints, points, dim, k, allowed_error = 0.001, max_generations = 1)[1])
-print(paper_approach(datapoints, dim, points, k, solution_set_size = 50, top_n = 20, new_n = 0, crossover_points = 2, p = 0.001, allowed_error = 21.5, max_generations = 20, initial_iteration = 5)[1])
+#s = k_means_regular(datapoints, points, dim, k, allowed_error = 0.001, max_generations = 500)
+
+
+f = open("readings2.txt", "w")
+for i in range(2):
+	datapoints = np.random.rand(points, dim)
+	start = time.time()
+	r = k_means_regular(datapoints, points, dim, k, allowed_error = 0.001, max_generations = 500)
+	regt = time.time() - start
+	start = time.time()
+	g = k_means_genetic(datapoints, dim, points, k, solution_set_size = 100, top_n = 20, new_n = 10, crossover_points = 2, p = 0.15, allowed_error = 0.001, max_generations = 50) 
+	gent = time.time() - start
+	start = time.time()
+	pa1 = paper_approach(datapoints, dim, points, k, solution_set_size = 100, top_n = 20, new_n = 0, crossover_points = 2, p = 0.15, allowed_error = 21.5, max_generations = 20, initial_iteration = 5)
+	pa1t = time.time() - start
+	start = time.time()
+	pa2 = paper_approach_2(datapoints, dim, points, k, solution_set_size = 100, top_n = 20, new_n = 0, crossover_points = 1, p = 0.15, allowed_error = 10, initial_generations = 3, max_iteration = 100)
+	pa2t = time.time() - start
+	lll = [i, dim, k, regt, gent, pa1t, pa2t,r[1], g[3], pa1[3], pa2[1]]
+	ll2 = map(str, lll)	
+	print(type(lll))
+	f.write(str.join(',', ll2) + "\n")
+	points = points*10
+f.close()
+	
+#print(s[1])
+#print(k_means_regular(datapoints, points, dim, k, allowed_error = 0.001, max_generations = 1)[1])
+#print(paper_approach(datapoints, dim, points, k, solution_set_size = 50, top_n = 20, new_n = 0, crossover_points = 2, p = 0.001, allowed_error = 21.5, max_generations = 20, initial_iteration = 5)[1])
 #input()
 #print(k_means_genetic(datapoints, dim, points, k, solution_set_size = 100, top_n = 10, new_n = 10, crossover_points = 2, p = 1, allowed_error = 21.5, max_generations = 100))
-print(paper_approach_2(datapoints, dim, points, k, solution_set_size = 100, top_n = 20, new_n = 0, crossover_points = 1, p = 0.1, allowed_error = 10, initial_generations = 3, max_iteration = 200)[1])
+#print(paper_approach_2(datapoints, dim, points, k, solution_set_size = 100, top_n = 20, new_n = 0, crossover_points = 1, p = 0.1, allowed_error = 10, initial_generations = 3, max_iteration = 200)[1])
